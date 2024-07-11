@@ -2,48 +2,60 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Post;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PostResource;
-use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    //
-    public function index() 
+    /**
+     * index
+     *
+     * @return void
+     */
+    public function index()
     {
+        //get all posts
         $posts = Post::latest()->paginate(5);
 
-        return new PostResource(true, 'List Data Post', $posts);
+        //return collection of posts as a resource
+        return new PostResource(true, 'List Data Posts', $posts);
     }
 
+    /**
+     * store
+     *
+     * @param  mixed $request
+     * @return void
+     */
     public function store(Request $request)
     {
-        // Definisi aturan validasi 
+        //define validation rules
         $validator = Validator::make($request->all(), [
-            'image' => 'required|image|mimes:jpeg, png, gif, svg|max:2048',
-            'title' => 'require',
-            'content' => 'require',
-
+            'image'     => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'title'     => 'required',
+            'content'   => 'required',
         ]);
 
-        // mengecek validasi jika fails
+        //check if validation fails
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        // upload imgae 
+        //upload image
         $image = $request->file('image');
         $image->storeAs('public/posts', $image->hashName());
 
-        // create post 
+        //create post
         $post = Post::create([
-            'image' => $image->hashName(),
-            'title' => $request->title, 
-            'content' => $request->content
+            'image'     => $image->hashName(),
+            'title'     => $request->title,
+            'content'   => $request->content,
         ]);
 
-        return new PostResource(true, "Data Post Berhasil Ditambahkan!", $post);
+        //return response
+        return new PostResource(true, 'Data Post Berhasil Ditambahkan!', $post);
     }
 }
